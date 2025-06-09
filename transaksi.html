@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pembayaran</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+
+    .sub-header {
+      height: 90px;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .readonly {
+      background-color: #eee;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .success {
+      text-align: center;
+    }
+
+    .success .check-icon img {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    .success h2 {
+      font-size: 24px;
+      color: #28a745;
+    }
+
+    .success ul {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+    }
+
+    .success ul li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <section class="sub-header">
+    <span class="page-title">Pembayaran</span>
+  </section>
+
+  <!-- FORM PEMBAYARAN -->
+  <div class="container" id="form-container">
+    <h2>Form Pembayaran</h2>
+    <div class="form-group">
+      <label>Metode Pembayaran</label>
+      <input type="text" id="metode" class="readonly" readonly>
+    </div>
+    <div class="form-group">
+      <label>Bank</label>
+      <input type="text" id="bank" class="readonly" readonly>
+    </div>
+    <div class="form-group">
+      <label>Kamar yang Dipesan</label>
+      <input type="text" id="kamar" class="readonly" readonly>
+    </div>
+    <div class="form-group">
+      <label>Total Pembayaran</label>
+      <input type="text" id="total" class="readonly" readonly>
+    </div>
+
+    <div id="form-transfer">
+      <div class="form-group">
+        <label>Nomor Rekening Anda</label>
+        <input type="text" id="norek" placeholder="Masukkan nomor rekening anda">
+      </div>
+      <button id="bayarBtn" disabled onclick="setujuBayar()">Setuju & Bayar</button>
+    </div>
+  </div>
+
+  <!-- HALAMAN SUKSES -->
+  <div class="container hidden" id="success-container">
+    <div class="success">
+      <div class="check-icon">
+        <img id="statusIcon" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Yes_Check_Circle.svg/2048px-Yes_Check_Circle.svg.png" alt="Sukses">
+      </div>
+      <h2 id="statusText">Success!</h2>
+      <p>Berikut data pemesanan Anda:</p>
+      <ul id="hasilDetail"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Simulasi data dari sessionStorage
+    const akun = JSON.parse(sessionStorage.getItem("akunLogin")) || { nama: "Dewi", telepon: "089100220011" };
+    const kamarDipilih = JSON.parse(sessionStorage.getItem("kamarDipilih")) || ["Superior Class 1"];
+    const metode = sessionStorage.getItem("metodePembayaran") || "Transfer";
+    const bank = sessionStorage.getItem("bankDipilih") || "BRI";
+
+    const kamarData = {
+      "Superior Class 1": { harga: "Rp650.000" },
+      "Standard Class 1": { harga: "Rp550.000" },
+      "Deluxe Class 1": { harga: "Rp750.000" },
+      "Superior Class 2": { harga: "Rp700.000" },
+      "Standard Class 2": { harga: "Rp600.000" },
+      "Deluxe Class 2": { harga: "Rp800.000" }
+    };
+
+    // Isi field form
+    document.getElementById("metode").value = metode;
+    document.getElementById("bank").value = metode === "Cash" ? "-" : bank;
+    document.getElementById("kamar").value = kamarDipilih[0];
+    document.getElementById("total").value = kamarData[kamarDipilih[0]].harga;
+
+    const norekInput = document.getElementById("norek");
+    const bayarBtn = document.getElementById("bayarBtn");
+
+    // Jika metode cash, langsung tampilkan notifikasi sukses
+    if (metode.toLowerCase() === "cash") {
+      showSuccess({
+        nama: akun.nama,
+        telepon: akun.telepon,
+        kamar: kamarDipilih[0],
+        harga: kamarData[kamarDipilih[0]].harga,
+        bank: "-",
+        metode: metode,
+        norek: "-",
+        tanggal: new Date().toLocaleDateString("id-ID"),
+        jumlah: 1,
+        status: "Menunggu Pembayaran"
+      });
+    } else {
+      // Aktifkan tombol jika nomor rekening diisi
+      norekInput.addEventListener("input", function () {
+        bayarBtn.disabled = this.value.trim() === "";
+      });
+    }
+
+    function setujuBayar() {
+      const data = {
+        nama: akun.nama,
+        telepon: akun.telepon,
+        kamar: kamarDipilih[0],
+        harga: kamarData[kamarDipilih[0]].harga,
+        bank: bank,
+        metode: metode,
+        norek: norekInput.value,
+        tanggal: new Date().toLocaleDateString("id-ID"),
+        jumlah: 1,
+        status: "Berhasil Dibayar"
+      };
+      showSuccess(data);
+    }
+
+    function showSuccess(data) {
+      document.getElementById("form-container").classList.add("hidden");
+      const success = document.getElementById("success-container");
+      success.classList.remove("hidden");
+
+      // Ganti ikon & teks jika cash
+      const isCash = data.status === "Menunggu Pembayaran";
+      document.getElementById("statusIcon").src = isCash
+        ? "https://upload.wikimedia.org/wikipedia/commons/3/3a/Orange-exclamation.svg"
+        : "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Yes_Check_Circle.svg/2048px-Yes_Check_Circle.svg.png";
+
+      document.getElementById("statusText").innerText = isCash
+        ? "Menunggu Pembayaran di Resepsionis"
+        : "Success!";
+
+      // Tampilkan detail
+      document.getElementById("hasilDetail").innerHTML = `
+        <li><strong>Nama:</strong> ${data.nama}</li>
+        <li><strong>No HP:</strong> ${data.telepon}</li>
+        <li><strong>Nomor Kamar:</strong> ${data.kamar}</li>
+        <li><strong>Nama Kamar:</strong> ${data.kamar}</li>
+        <li><strong>Tanggal Pesan:</strong> ${data.tanggal}</li>
+        <li><strong>Jumlah Pesanan:</strong> ${data.jumlah}</li>
+      `;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payment - Puramevi Hotel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    /* ========= sub header ========= */
+    .sub-header {
+      height: 90px;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .left-group {
+      display: flex;
+      align-items: center;
+    }
+
+    .back-button {
+      font-size: 28px;
+      font-weight: 900;
+      color: #333;
+      text-decoration: none;
+      cursor: pointer;
+      margin-right: 8px;
+      padding: 0;
+      line-height: 1;
+      user-select: none;
+      background: none;
+      border: none;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .info-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background-color: #fff;
+      border: 2px solid #aaa;
+      color: #888;
+      font-weight: bold;
+      border-radius: 50%;
+      text-decoration: none;
+      font-size: 16px;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .info-button:hover {
+      background-color: #f9f9f9;
+      color: #666;
+      border-color: #888;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .user-info {
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .room-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .room {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      background-color: #fafafa;
+    }
+
+    .room img {
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .room-info {
+      flex-grow: 1;
+    }
+
+    .room-info h4 {
+      margin: 0 0 5px 0;
+    }
+
+    .room-info p {
+      margin: 3px 0;
+    }
+
+    .pay-btn {
+      margin-top: 30px;
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(to right, #007bff, #0056b3);
+      color: white;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .pay-btn:hover {
+      background: linear-gradient(to right, #0056b3, #004080);
+    }
+  </style>
+</head>
+<body>
+  <section class="sub-header">
+    <div class="left-group">
+      <a href="Index.html" class="back-button" aria-label="Kembali">&#8592;</a>
+      <span class="page-title">Order Cart</span>
+    </div>
+    <a href="information.html" class="info-button" title="Information" aria-label="Informasi">i</a>
+  </section>
+
+  <div class="container">
+    <h2>Konfirmasi Pembayaran</h2>
+    <div class="user-info" id="userInfo"></div>
+    <div class="room-list" id="roomList"></div>
+    <button class="pay-btn" onclick="handleBayar()">Bayar Sekarang</button>
+  </div>
+
+  <script>
+    const kamarData = {
+      "Superior Class 1": {
+        jenis: "Superior",
+        harga: "Rp650.000",
+        gambar: "superior1.jpg"
+      },
+      "Standard Class 1": {
+        jenis: "Standard",
+        harga: "Rp550.000",
+        gambar: "standard1.jpg"
+      },
+      "Deluxe Class 1": {
+        jenis: "Deluxe",
+        harga: "Rp750.000",
+        gambar: "deluxe1.jpg"
+      },
+      "Superior Class 2": {
+        jenis: "Superior",
+        harga: "Rp700.000",
+        gambar: "superior2.jpg"
+      },
+      "Standard Class 2": {
+        jenis: "Standard",
+        harga: "Rp600.000",
+        gambar: "standard2.jpg"
+      },
+      "Deluxe Class 2": {
+        jenis: "Deluxe",
+        harga: "Rp800.000",
+        gambar: "deluxe2.jpg"
+      }
+    };
+
+    function renderPaymentInfo() {
+      const akun = JSON.parse(sessionStorage.getItem("akunLogin"));
+      const kamarDipilih = JSON.parse(sessionStorage.getItem("kamarDipilih"));
+
+      const userInfoDiv = document.getElementById("userInfo");
+      const roomListDiv = document.getElementById("roomList");
+
+      if (!akun || !kamarDipilih) {
+        userInfoDiv.innerHTML = "<p>Data login atau kamar tidak ditemukan.</p>";
+        return;
+      }
+
+      userInfoDiv.innerHTML = `<p>Nama: <strong>${akun.nama}</strong></p>`;
+
+      kamarDipilih.forEach(namaKamar => {
+        const data = kamarData[namaKamar];
+        if (data) {
+          const roomDiv = document.createElement("div");
+          roomDiv.className = "room";
+          roomDiv.innerHTML = `
+            <img src="images/${data.gambar}" alt="${namaKamar}" />
+            <div class="room-info">
+              <h4>${namaKamar}</h4>
+              <p>Jenis Kamar: ${data.jenis}</p>
+              <p>Harga per Malam: ${data.harga}</p>
+            </div>
+          `;
+          roomListDiv.appendChild(roomDiv);
+        }
+      });
+    }
+
+    function handleBayar() {
+      alert("Pembayaran berhasil!");
+      // Bisa diarahkan ke halaman selesai / struk
+      window.location.href = "success.html";
+    }
+
+    renderPaymentInfo();
+  </script>
+</body>
+</html>
